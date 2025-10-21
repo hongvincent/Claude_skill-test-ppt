@@ -34,10 +34,39 @@ python -m http.server 8000
 # 브라우저에서 http://localhost:8000 접속
 ```
 
-### 온라인 호스팅
+### 온라인 호스팅 (GitHub Pages)
 
-- GitHub Pages, Netlify, Vercel 등에 배포 가능
-- 정적 HTML 파일이므로 별도 서버 설정 불필요
+#### 🌐 GitHub Pages로 배포하기
+
+**방법 1: 현재 브랜치 사용 (가장 빠름)**
+
+1. GitHub 저장소 페이지로 이동
+2. **Settings** → **Pages** 메뉴 클릭
+3. **Source** 섹션에서:
+   - Branch: `claude/create-web-slides-011CUKprwMMoLSHdiR2FKFzV` 선택
+   - Folder: `/ (root)` 선택
+   - **Save** 클릭
+4. 1-2분 후 URL 확인: `https://<username>.github.io/Claude_skill-test-ppt/`
+
+**방법 2: Main 브랜치로 병합 후 배포 (권장)**
+
+1. Pull Request 생성:
+   - 브랜치 `claude/create-web-slides-011CUKprwMMoLSHdiR2FKFzV` → `main`
+2. PR 병합 (Merge)
+3. GitHub **Settings** → **Pages**:
+   - Branch: `main` 선택
+   - Folder: `/ (root)` 선택
+   - **Save** 클릭
+4. 배포 완료 후 접속: `https://<username>.github.io/Claude_skill-test-ppt/`
+
+**배포 확인:**
+- Settings → Pages에서 "Your site is live at..." 메시지 확인
+- Actions 탭에서 배포 진행 상황 확인 가능
+
+**기타 호스팅 옵션:**
+- Netlify: 저장소 연결 후 자동 배포
+- Vercel: GitHub 연동으로 즉시 배포
+- 정적 HTML 파일이므로 별도 빌드 설정 불필요
 
 ## ⌨️ 키보드 단축키
 
