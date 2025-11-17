@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG (Retrieval-Augmented Generation) 완벽 가이드</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="slide-container">
+        <!-- Slide 1: Title -->
+        <section class="slide active" data-section="intro">
+            <div class="slide-content">
+                <h1 class="main-title">RAG 완벽 가이드</h1>
+                <h2 class="subtitle">Retrieval-Augmented Generation</h2>
+                <p class="author">105개 핵심 Q&A로 마스터하기</p>
+                <div class="topic-grid">
+                    <div class="topic-card">📚 RAG 기초</div>
+                    <div class="topic-card">🔍 검색 시스템</div>
+                    <div class="topic-card">📊 평가 메트릭</div>
+                    <div class="topic-card">⚡ 최적화 기법</div>
+                </div>
+                <p class="source">출처: AIxFunda Newsletter by Kalyan KS</p>
+            </div>
+        </section>
+
+        <!-- Slide 2: Table of Contents -->
+        <section class="slide" data-section="intro">
+            <div class="slide-content">
+                <h2>목차</h2>
+                <div class="toc">
+                    <div class="toc-item">
+                        <span class="toc-number">01</span>
+                        <span class="toc-title">RAG 기초</span>
+                        <span class="toc-desc">필요성과 핵심 개념</span>
+                    </div>
+                    <div class="toc-item">
+                        <span class="toc-number">02</span>
+                        <span class="toc-title">RAG 파이프라인</span>
+                        <span class="toc-desc">인덱싱, 검색, 생성</span>
+                    </div>
+                    <div class="toc-item">
+                        <span class="toc-number">03</span>
+                        <span class="toc-title">청킹 전략</span>
+                        <span class="toc-desc">최적화된 문서 분할</span>
+                    </div>
+                    <div class="toc-item">
+                        <span class="toc-number">04</span>
+                        <span class="toc-title">검색 시스템</span>
+                        <span class="toc-desc">임베딩과 벡터 검색</span>
+                    </div>
+                    <div class="toc-item">
+                        <span class="toc-number">05</span>
+                        <span class="toc-title">리랭킹</span>
+                        <span class="toc-desc">정확도 향상 기법</span>
+                    </div>
+                    <div class="toc-item">
+                        <span class="toc-number">06</span>
+                        <span class="toc-title">평가 메트릭</span>
+                        <span class="toc-desc">성능 측정 방법</span>
+                    </div>
+                    <div class="toc-item">
+                        <span class="toc-number">07</span>
+                        <span class="toc-title">고급 기법</span>
+                        <span class="toc-desc">쿼리 변환 & 최적화</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 1: RAG Basics -->
+        <section class="slide section-title" data-section="basics">
+            <div class="slide-content">
+                <h1>01. RAG 기초</h1>
+                <p class="section-subtitle">왜 RAG가 필요한가?</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="basics">
+            <div class="slide-content">
+                <h2>Q1. LLM이 이미 강력한데 왜 RAG가 필요한가?</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h3>🔴 LLM의 한계</h3>
+                        <ul>
+                            <li><strong>Knowledge Cutoff</strong>: 정적 지식, 최신 정보 부족</li>
+                            <li><strong>학습 데이터 제한</strong>: 훈련 코퍼스에 없는 정보</li>
+                            <li><strong>할루시네이션</strong>: 그럴듯하지만 잘못된 답변</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>✅ RAG의 해결책</h3>
+                        <ul>
+                            <li><strong>외부 지식 활용</strong>: 최신/전문 정보 검색</li>
+                            <li><strong>컨텍스트 제공</strong>: 정확한 참조 자료</li>
+                            <li><strong>정확도 향상</strong>: 근거 기반 응답</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box warning">
+                    <strong>핵심:</strong> RAG는 LLM에게 "외부 참고서"를 제공하여 더 정확하고 최신의 답변을 생성하도록 돕습니다.
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="basics">
+            <div class="slide-content">
+                <h2>Q2. Long Context LLM 시대에도 RAG가 필요한가?</h2>
+                <div class="comparison">
+                    <div class="compare-item">
+                        <h3>❌ Long Context만 사용 시 문제점</h3>
+                        <div class="problem-list">
+                            <div class="problem">
+                                <span class="icon">🎯</span>
+                                <div>
+                                    <strong>Lost in the Middle</strong>
+                                    <p>긴 컨텍스트에서 중요 정보를 놓침</p>
+                                </div>
+                            </div>
+                            <div class="problem">
+                                <span class="icon">💰</span>
+                                <div>
+                                    <strong>높은 API 비용</strong>
+                                    <p>긴 시퀀스 처리 비용 증가</p>
+                                </div>
+                            </div>
+                            <div class="problem">
+                                <span class="icon">⏱️</span>
+                                <div>
+                                    <strong>지연 시간 증가</strong>
+                                    <p>처리 시간 상승</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="compare-item success">
+                        <h3>✅ RAG + Long Context</h3>
+                        <ul>
+                            <li>가장 관련성 높은 정보만 선별</li>
+                            <li>비용 효율적인 운영</li>
+                            <li>빠른 응답 시간</li>
+                            <li>높은 정확도 유지</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="basics">
+            <div class="slide-content">
+                <h2>Q5. RAG의 R, A, G 설명</h2>
+                <div class="rag-pipeline">
+                    <div class="pipeline-step">
+                        <div class="step-icon">🔍</div>
+                        <h3>R - Retrieval (검색)</h3>
+                        <p>외부 지식 소스에서 사용자 쿼리와 가장 관련성 높은 정보를 검색하고 가져오는 과정</p>
+                        <div class="code-block">
+query → embedding → vector search → top-k chunks
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon">📝</div>
+                        <h3>A - Augmented (증강)</h3>
+                        <p>검색된 관련 컨텍스트를 사용자 쿼리 및 지시사항과 함께 LLM 프롬프트에 포함</p>
+                        <div class="code-block">
+prompt = instructions + query + retrieved_context
+                        </div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-icon">✨</div>
+                        <h3>G - Generation (생성)</h3>
+                        <p>LLM이 제공된 컨텍스트를 기반으로 일관되고 정확하며 맥락에 맞는 응답을 생성</p>
+                        <div class="code-block">
+LLM(prompt) → coherent & accurate response
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="basics">
+            <div class="slide-content">
+                <h2>Q6. RAG가 할루시네이션을 줄이는 방법</h2>
+                <div class="comparison-layout">
+                    <div class="before-after">
+                        <div class="before">
+                            <h3>❌ RAG 없이</h3>
+                            <div class="flow">
+                                <div class="flow-item">사용자 질문</div>
+                                <div class="arrow">↓</div>
+                                <div class="flow-item">LLM (훈련 데이터만 의존)</div>
+                                <div class="arrow">↓</div>
+                                <div class="flow-item danger">
+                                    ⚠️ 가능한 문제<br>
+                                    • 오래된 정보<br>
+                                    • 불완전한 지식<br>
+                                    • 할루시네이션
+                                </div>
+                            </div>
+                        </div>
+                        <div class="after">
+                            <h3>✅ RAG 사용</h3>
+                            <div class="flow">
+                                <div class="flow-item">사용자 질문</div>
+                                <div class="arrow">↓</div>
+                                <div class="flow-item success">외부 검색 시스템</div>
+                                <div class="arrow">↓</div>
+                                <div class="flow-item">신뢰할 수 있는 최신 정보</div>
+                                <div class="arrow">↓</div>
+                                <div class="flow-item">LLM (컨텍스트 기반)</div>
+                                <div class="arrow">↓</div>
+                                <div class="flow-item success">
+                                    ✓ 정확한 답변<br>
+                                    ✓ 근거 있는 응답<br>
+                                    ✓ 맥락 관련성
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box info">
+                    <strong>핵심 메커니즘:</strong> 신뢰할 수 있는 외부 소스의 사실 정보를 제공하여 LLM이 근거 기반 응답을 생성하도록 유도
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: RAG Pipeline -->
+        <section class="slide section-title" data-section="pipeline">
+            <div class="slide-content">
+                <h1>02. RAG 파이프라인</h1>
+                <p class="section-subtitle">인덱싱 → 검색 → 생성</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="pipeline">
+            <div class="slide-content">
+                <h2>Q11. RAG 인덱싱 프로세스 4단계</h2>
+                <div class="process-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>📄 Parsing (파싱)</h3>
+                            <p>문서에서 내용 추출</p>
+                            <div class="code-example">PDF, HTML, DOCX → plain text</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>✂️ Chunking (청킹)</h3>
+                            <p>추출된 내용을 작은 조각(청크)으로 분할</p>
+                            <div class="code-example">text → [chunk1, chunk2, ...]</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>🔢 Encoding (인코딩)</h3>
+                            <p>임베딩 모델로 청크를 벡터로 변환</p>
+                            <div class="code-example">chunks → dense vectors (embeddings)</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>💾 Storing (저장)</h3>
+                            <p>벡터 데이터베이스에 임베딩 저장</p>
+                            <div class="code-example">embeddings → VectorDB</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <strong>중요:</strong> 모든 인덱싱 단계는 오프라인으로 수행됩니다.
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="pipeline">
+            <div class="slide-content">
+                <h2>Q15. RAG 검색 프로세스</h2>
+                <div class="retrieval-flow">
+                    <div class="retrieval-step">
+                        <h3>Step 1: Query Encoding</h3>
+                        <div class="step-detail">
+                            <p>사용자 쿼리를 임베딩 모델로 벡터화</p>
+                            <div class="code-block">
+user_query = "What is RAG?"
+query_vector = embedding_model.encode(user_query)
+# Output: [0.23, -0.45, 0.67, ...]
+                            </div>
+                        </div>
+                    </div>
+                    <div class="arrow-down">↓</div>
+                    <div class="retrieval-step">
+                        <h3>Step 2: Vector Search</h3>
+                        <div class="step-detail">
+                            <p>벡터 DB에서 유사도 검색 수행</p>
+                            <div class="code-block">
+results = vector_db.search(
+    query_vector,
+    top_k=5,
+    metric="cosine_similarity"
+)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="arrow-down">↓</div>
+                    <div class="retrieval-step">
+                        <h3>Step 3: Return Top-K Chunks</h3>
+                        <div class="step-detail">
+                            <p>유사도 점수 기반 상위 K개 문서 청크 반환</p>
+                            <div class="code-block">
+top_chunks = [
+    (chunk1, score=0.95),
+    (chunk2, score=0.89),
+    ...
+]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Chunking -->
+        <section class="slide section-title" data-section="chunking">
+            <div class="slide-content">
+                <h1>03. 청킹 전략</h1>
+                <p class="section-subtitle">효과적인 문서 분할 기법</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="chunking">
+            <div class="slide-content">
+                <h2>Q12. 청킹의 중요성</h2>
+                <div class="importance-grid">
+                    <div class="importance-card">
+                        <div class="card-icon">🎯</div>
+                        <h3>의미 일관성</h3>
+                        <p>큰 텍스트를 의미적으로 일관된 작은 세그먼트로 분할</p>
+                    </div>
+                    <div class="importance-card">
+                        <div class="card-icon">🔍</div>
+                        <h3>검색 효율성</h3>
+                        <p>관련 정보를 효율적으로 찾을 수 있는 집중된 청크 생성</p>
+                    </div>
+                    <div class="importance-card">
+                        <div class="card-icon">⚖️</div>
+                        <h3>최적 균형</h3>
+                        <p>세부 정보와 컨텍스트 간의 균형 유지</p>
+                    </div>
+                    <div class="importance-card">
+                        <div class="card-icon">⚡</div>
+                        <h3>성능 최적화</h3>
+                        <p>검색 정확도와 계산 효율성 향상</p>
+                    </div>
+                </div>
+                <div class="highlight-box warning">
+                    <strong>주의:</strong> 비효과적인 청킹은 검색 품질 저하와 일관성 없는 응답으로 이어질 수 있습니다.
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="chunking">
+            <div class="slide-content">
+                <h2>Q13-Q14. 청크 크기 선택 가이드</h2>
+                <div class="chunk-size-guide">
+                    <div class="size-option">
+                        <h3>🔸 작은 청크 (100-200 tokens)</h3>
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <strong>장점:</strong>
+                                <ul>
+                                    <li>정밀한 검색 가능</li>
+                                    <li>사실 기반 쿼리에 적합</li>
+                                    <li>낮은 노이즈</li>
+                                </ul>
+                            </div>
+                            <div class="cons">
+                                <strong>단점:</strong>
+                                <ul>
+                                    <li>컨텍스트 단편화</li>
+                                    <li>충분한 컨텍스트 부족 가능</li>
+                                    <li>저장 공간 증가</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="size-option">
+                        <h3>🔹 큰 청크 (500-1000 tokens)</h3>
+                        <div class="pros-cons">
+                            <div class="pros">
+                                <strong>장점:</strong>
+                                <ul>
+                                    <li>풍부한 컨텍스트 제공</li>
+                                    <li>복잡한 쿼리에 유리</li>
+                                    <li>의미적 완전성</li>
+                                </ul>
+                            </div>
+                            <div class="cons">
+                                <strong>단점:</strong>
+                                <ul>
+                                    <li>계산 부하 증가</li>
+                                    <li>여러 주제 혼재 가능</li>
+                                    <li>관련성 희석</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="decision-factors">
+                    <h3>결정 요인</h3>
+                    <div class="factors">
+                        <span class="factor">📋 사용 사례</span>
+                        <span class="factor">📚 문서 구조</span>
+                        <span class="factor">🤖 임베딩 모델</span>
+                        <span class="factor">💬 LLM 모델</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="chunking">
+            <div class="slide-content">
+                <h2>Q34. 일반적인 청킹 방법</h2>
+                <div class="chunking-methods">
+                    <div class="method">
+                        <h3>1️⃣ Fixed-Size Chunking</h3>
+                        <p class="method-desc">미리 정의된 토큰/문자 길이로 균일하게 분할</p>
+                        <div class="method-details">
+                            <div class="detail-item">
+                                <strong>특징:</strong> 오버랩 포함하여 컨텍스트 유지
+                            </div>
+                            <div class="detail-item">
+                                <strong>사용 시기:</strong> 단순하고 구조화되지 않은 텍스트
+                            </div>
+                        </div>
+                    </div>
+                    <div class="method">
+                        <h3>2️⃣ Recursive Chunking</h3>
+                        <p class="method-desc">문단, 문장 등 자연 구분자로 반복 분할</p>
+                        <div class="method-details">
+                            <div class="detail-item">
+                                <strong>특징:</strong> 논리적 경계 보존
+                            </div>
+                            <div class="detail-item">
+                                <strong>사용 시기:</strong> 구조화된 문서
+                            </div>
+                        </div>
+                    </div>
+                    <div class="method">
+                        <h3>3️⃣ Semantic Chunking</h3>
+                        <p class="method-desc">임베딩 기반 의미적 유사도로 그룹화</p>
+                        <div class="method-details">
+                            <div class="detail-item">
+                                <strong>특징:</strong> 의미 기반 일관된 청크
+                            </div>
+                            <div class="detail-item">
+                                <strong>사용 시기:</strong> 복잡한 쿼리, 높은 품질 요구
+                            </div>
+                        </div>
+                    </div>
+                    <div class="method">
+                        <h3>4️⃣ Agentic Chunking</h3>
+                        <p class="method-desc">AI 에이전트가 동적으로 작업 지향적 분할</p>
+                        <div class="method-details">
+                            <div class="detail-item">
+                                <strong>특징:</strong> 메타데이터 포함, 의미적 일관성
+                            </div>
+                            <div class="detail-item">
+                                <strong>사용 시기:</strong> 고급 애플리케이션
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Retrieval -->
+        <section class="slide section-title" data-section="retrieval">
+            <div class="slide-content">
+                <h1>04. 검색 시스템</h1>
+                <p class="section-subtitle">임베딩, 벡터 DB, 검색 전략</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="retrieval">
+            <div class="slide-content">
+                <h2>Q43. 임베딩이란? RAG에서의 활용</h2>
+                <div class="embedding-explanation">
+                    <div class="concept">
+                        <h3>📐 임베딩 정의</h3>
+                        <p>텍스트의 의미와 관계를 고차원 공간에서 포착하는 숫자 벡터 표현</p>
+                        <div class="code-block">
+"RAG is powerful" → [0.23, -0.45, 0.67, 0.12, ...]
+                        </div>
+                    </div>
+                    <div class="usage-flow">
+                        <h3>🔄 RAG에서의 활용 흐름</h3>
+                        <div class="flow-steps">
+                            <div class="flow-step">
+                                <strong>1. 쿼리 & 문서 벡터화</strong>
+                                <p>사용자 쿼리와 문서 청크를 벡터로 변환</p>
+                            </div>
+                            <div class="arrow-right">→</div>
+                            <div class="flow-step">
+                                <strong>2. 의미적 유사도 계산</strong>
+                                <p>벡터 간 유사도 비교 (코사인 유사도)</p>
+                            </div>
+                            <div class="arrow-right">→</div>
+                            <div class="flow-step">
+                                <strong>3. 관련 청크 검색</strong>
+                                <p>가장 유사한 상위 K개 검색</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box success">
+                    <strong>핵심 장점:</strong> 키워드 매칭을 넘어 의미 기반 검색 가능 - "car"와 "automobile"을 유사하게 인식
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="retrieval">
+            <div class="slide-content">
+                <h2>Q45-Q46. VectorDB와 ANN 알고리즘</h2>
+                <div class="vector-db-section">
+                    <div class="vectordb-intro">
+                        <h3>💾 VectorDB란?</h3>
+                        <p>고차원 벡터 임베딩을 저장하고 검색하기 위해 특화된 데이터베이스</p>
+                        <div class="features">
+                            <span class="feature-tag">빠른 유사도 검색</span>
+                            <span class="feature-tag">확장 가능</span>
+                            <span class="feature-tag">의미적 검색</span>
+                        </div>
+                    </div>
+                    <div class="ann-section">
+                        <h3>⚡ ANN (Approximate Nearest Neighbor)</h3>
+                        <p>대규모 벡터 DB에서 빠른 검색을 가능하게 하는 알고리즘</p>
+                        <div class="ann-process">
+                            <div class="ann-step">
+                                <span class="step-label">Step 1</span>
+                                <strong>Encoding</strong>
+                                <p>문서와 쿼리를 벡터로 변환</p>
+                            </div>
+                            <div class="ann-step">
+                                <span class="step-label">Step 2</span>
+                                <strong>Indexing</strong>
+                                <p>특수 자료구조로 벡터 조직화<br>(그래프, 해시 테이블 등)</p>
+                            </div>
+                            <div class="ann-step">
+                                <span class="step-label">Step 3</span>
+                                <strong>Navigating</strong>
+                                <p>모든 점을 확인하지 않고<br>효율적으로 탐색</p>
+                            </div>
+                            <div class="ann-step">
+                                <span class="step-label">Step 4</span>
+                                <strong>Retrieving</strong>
+                                <p>근사 최근접 이웃 반환</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box info">
+                    <strong>속도 vs 정확도:</strong> ANN은 약간의 정확도를 희생하여 매우 빠른 검색 제공 (실시간 RAG에 필수)
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="retrieval">
+            <div class="slide-content">
+                <h2>Q48-Q49. 거리 메트릭 & 코사인 유사도</h2>
+                <div class="metrics-comparison">
+                    <div class="metric">
+                        <h3>📏 Euclidean Distance</h3>
+                        <div class="metric-content">
+                            <p>벡터 간 직선 거리 측정</p>
+                            <div class="formula">d = √Σ(a_i - b_i)²</div>
+                            <div class="use-case">기하학적 근접성 중시</div>
+                        </div>
+                    </div>
+                    <div class="metric highlight">
+                        <h3>📐 Cosine Similarity ⭐</h3>
+                        <div class="metric-content">
+                            <p>벡터 간 각도(방향) 측정</p>
+                            <div class="formula">cos(θ) = (a·b) / (||a|| ||b||)</div>
+                            <div class="use-case">의미(방향) 중시, 크기 무시</div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <h3>🎯 Dot Product</h3>
+                        <div class="metric-content">
+                            <p>크기와 방향 모두 고려</p>
+                            <div class="formula">a · b = Σ(a_i × b_i)</div>
+                            <div class="use-case">크기 정보 중요 시</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="why-cosine">
+                    <h3>✅ RAG에서 코사인 유사도를 선호하는 이유</h3>
+                    <ul>
+                        <li><strong>벡터 길이 불변:</strong> 텍스트 길이가 달라도 안정적</li>
+                        <li><strong>의미 중심:</strong> 방향(의미)에 집중, 크기 무시</li>
+                        <li><strong>해석 용이:</strong> -1 ~ 1 범위의 일관된 점수</li>
+                        <li><strong>텍스트 특화:</strong> 의미가 방향에 있는 텍스트 데이터에 최적</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="retrieval">
+            <div class="slide-content">
+                <h2>Q50-Q51. 검색 방식 비교</h2>
+                <div class="retrieval-types">
+                    <div class="type-card">
+                        <h3>🔤 Keyword-Based Retrieval</h3>
+                        <div class="card-content">
+                            <p class="desc">키워드 정확/부분 매칭 (BM25, TF-IDF)</p>
+                            <div class="pros-cons-mini">
+                                <div class="pros-mini">
+                                    <strong>✅ 장점:</strong> 특정 용어에 높은 정밀도
+                                </div>
+                                <div class="cons-mini">
+                                    <strong>❌ 단점:</strong> 동의어 놓침
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="type-card">
+                        <h3>🧠 Semantic Retrieval</h3>
+                        <div class="card-content">
+                            <p class="desc">임베딩 기반 의미 이해</p>
+                            <div class="pros-cons-mini">
+                                <div class="pros-mini">
+                                    <strong>✅ 장점:</strong> 개념적 관련성 포착
+                                </div>
+                                <div class="cons-mini">
+                                    <strong>❌ 단점:</strong> 특정 용어 정확도 낮을 수 있음
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="type-card best">
+                        <h3>🔀 Hybrid Search ⭐</h3>
+                        <div class="card-content">
+                            <p class="desc">키워드 + 의미 검색 결합</p>
+                            <div class="formula-box">
+                                score = α × keyword_score + (1-α) × semantic_score
+                            </div>
+                            <div class="pros-cons-mini">
+                                <div class="pros-mini">
+                                    <strong>✅ 최고:</strong> 정밀도 + 의미 이해
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hybrid-when">
+                    <h3>Q52. Hybrid Search를 선택하는 경우</h3>
+                    <ul>
+                        <li>특정 용어/코드/엔티티의 정확한 매칭이 필요한 경우</li>
+                        <li>동의어나 관련 개념도 함께 검색해야 하는 경우</li>
+                        <li>정밀도와 맥락 관련성을 모두 중요시하는 도메인</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Re-ranking -->
+        <section class="slide section-title" data-section="reranking">
+            <div class="slide-content">
+                <h1>05. 리랭킹</h1>
+                <p class="section-subtitle">검색 품질 향상의 핵심</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="reranking">
+            <div class="slide-content">
+                <h2>Q7 & Q61. 리랭킹이 중요한 이유</h2>
+                <div class="reranking-importance">
+                    <div class="problem-solution">
+                        <div class="problem-box">
+                            <h3>❌ 문제 상황</h3>
+                            <div class="scenario">
+                                <p>초기 검색으로 상위 K개 청크 검색</p>
+                                <div class="chunk-list bad">
+                                    <div class="chunk irrelevant">Chunk 1 (관련 없음) - 0.85</div>
+                                    <div class="chunk irrelevant">Chunk 2 (관련 없음) - 0.83</div>
+                                    <div class="chunk relevant">Chunk 3 (관련 있음) - 0.81</div>
+                                    <div class="chunk relevant">Chunk 4 (관련 있음) - 0.79</div>
+                                    <div class="chunk irrelevant">Chunk 5 (관련 없음) - 0.77</div>
+                                </div>
+                                <p class="issue">⚠️ LLM은 주로 상위 랭크된 청크를 참고 → 품질 저하</p>
+                            </div>
+                        </div>
+                        <div class="solution-box">
+                            <h3>✅ 리랭킹 해결</h3>
+                            <div class="scenario">
+                                <p>Cross-encoder로 깊은 의미적 관련성 측정</p>
+                                <div class="chunk-list good">
+                                    <div class="chunk relevant">Chunk 3 (관련 있음) - 0.95</div>
+                                    <div class="chunk relevant">Chunk 4 (관련 있음) - 0.92</div>
+                                    <div class="chunk irrelevant">Chunk 1 (관련 없음) - 0.65</div>
+                                    <div class="chunk irrelevant">Chunk 2 (관련 없음) - 0.61</div>
+                                    <div class="chunk irrelevant">Chunk 5 (관련 없음) - 0.58</div>
+                                </div>
+                                <p class="benefit">✓ 관련 청크가 상위로 → 정확하고 일관된 답변</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box info">
+                    <strong>핵심:</strong> 리랭킹은 노이즈를 줄이고 LLM이 가장 관련성 높은 정보에 집중하도록 돕습니다.
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="reranking">
+            <div class="slide-content">
+                <h2>Q63. 리랭커 모델 유형</h2>
+                <div class="reranker-types">
+                    <div class="reranker-card">
+                        <h3>1️⃣ Cross-Encoder Rerankers</h3>
+                        <div class="reranker-detail">
+                            <p class="mechanism">쿼리-청크 쌍을 함께 인코딩하여 관련성 점수 생성</p>
+                            <div class="specs">
+                                <div class="spec-item">
+                                    <span class="label">정확도:</span>
+                                    <span class="value high">⭐⭐⭐⭐⭐</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="label">비용:</span>
+                                    <span class="value medium">💰💰💰</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="label">특징:</span>
+                                    <span class="value">깊은 관계 이해</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reranker-card">
+                        <h3>2️⃣ Multi-Vector / Late Interaction</h3>
+                        <div class="reranker-detail">
+                            <p class="mechanism">별도 인코딩 후 세밀한 상호작용 (예: ColBERT)</p>
+                            <div class="specs">
+                                <div class="spec-item">
+                                    <span class="label">정확도:</span>
+                                    <span class="value high">⭐⭐⭐⭐</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="label">비용:</span>
+                                    <span class="value low">💰💰</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="label">특징:</span>
+                                    <span class="value">효율성-성능 균형</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reranker-card">
+                        <h3>3️⃣ LLM Rerankers</h3>
+                        <div class="reranker-detail">
+                            <p class="mechanism">강력한 LLM을 활용한 추론 기반 리랭킹</p>
+                            <div class="specs">
+                                <div class="spec-item">
+                                    <span class="label">정확도:</span>
+                                    <span class="value high">⭐⭐⭐⭐⭐</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="label">비용:</span>
+                                    <span class="value high">💰💰💰💰💰</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="label">특징:</span>
+                                    <span class="value">최고 정확도, 높은 오버헤드</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="selection-guide">
+                    <h3>선택 가이드</h3>
+                    <p>정확도와 지연 시간 요구사항에 따라 선택</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="reranking">
+            <div class="slide-content">
+                <h2>Q65. Bi-Encoder vs Cross-Encoder</h2>
+                <div class="encoder-comparison">
+                    <div class="encoder-box">
+                        <h3>Bi-Encoder (초기 검색)</h3>
+                        <div class="encoder-diagram">
+                            <div class="encoder-flow">
+                                <div class="flow-item">Query</div>
+                                <div class="encode">Encoder</div>
+                                <div class="vector">Vector Q</div>
+                            </div>
+                            <div class="encoder-flow">
+                                <div class="flow-item">Doc</div>
+                                <div class="encode">Encoder</div>
+                                <div class="vector">Vector D</div>
+                            </div>
+                            <div class="comparison-op">→ Similarity(Q, D)</div>
+                        </div>
+                        <div class="characteristics">
+                            <div class="char-item">✅ 빠른 속도 - 사전 계산 가능</div>
+                            <div class="char-item">✅ 확장성 높음</div>
+                            <div class="char-item">❌ 상호작용 제한적</div>
+                            <div class="char-item">🎯 용도: 넓은 후보 세트 검색</div>
+                        </div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="encoder-box highlight">
+                        <h3>Cross-Encoder (리랭킹)</h3>
+                        <div class="encoder-diagram">
+                            <div class="encoder-flow-combined">
+                                <div class="flow-item">[Query + Doc]</div>
+                                <div class="encode">Joint Encoder</div>
+                                <div class="score">Relevance Score</div>
+                            </div>
+                        </div>
+                        <div class="characteristics">
+                            <div class="char-item">✅ 높은 정확도 - 깊은 상호작용</div>
+                            <div class="char-item">✅ 정밀한 관련성 측정</div>
+                            <div class="char-item">❌ 느린 속도 - 사전 계산 불가</div>
+                            <div class="char-item">🎯 용도: 소수 후보 정밀 랭킹</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="best-practice">
+                    <h3>💡 Best Practice: 2단계 접근</h3>
+                    <p><strong>Stage 1:</strong> Bi-Encoder로 빠르게 상위 K개 검색 (예: 100개)</p>
+                    <p><strong>Stage 2:</strong> Cross-Encoder로 정밀 리랭킹 (예: 상위 5개)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Evaluation Metrics -->
+        <section class="slide section-title" data-section="metrics">
+            <div class="slide-content">
+                <h1>06. 평가 메트릭</h1>
+                <p class="section-subtitle">RAG 시스템 성능 측정</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="metrics">
+            <div class="slide-content">
+                <h2>Q42. RAG 검색 품질 평가 핵심 메트릭</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>📊 Precision@K</h3>
+                        <div class="metric-formula">
+                            Precision@K = (상위 K개 중 관련 문서 수) / K
+                        </div>
+                        <p class="metric-meaning">검색 결과의 <strong>정확도</strong> 측정</p>
+                        <div class="example">
+                            예: 5개 검색 중 4개 관련 → 0.8
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🎯 Recall@K</h3>
+                        <div class="metric-formula">
+                            Recall@K = (검색된 관련 문서 수) / (전체 관련 문서 수)
+                        </div>
+                        <p class="metric-meaning">검색 결과의 <strong>완전성</strong> 측정</p>
+                        <div class="example">
+                            예: 10개 관련 문서 중 7개 검색 → 0.7
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>🥇 MRR (Mean Reciprocal Rank)</h3>
+                        <div class="metric-formula">
+                            MRR = Average(1 / rank_of_first_relevant)
+                        </div>
+                        <p class="metric-meaning">첫 번째 관련 문서의 <strong>위치</strong> 평가</p>
+                        <div class="example">
+                            예: 첫 관련 문서가 3위 → 1/3 = 0.33
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>📈 NDCG (Normalized DCG)</h3>
+                        <div class="metric-formula">
+                            관련성과 순위를 모두 고려한 정규화 점수
+                        </div>
+                        <p class="metric-meaning">등급화된 관련성의 <strong>순위 품질</strong> 측정</p>
+                        <div class="example">
+                            높은 관련성 문서가 상위에 올수록 높은 점수
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="metrics">
+            <div class="slide-content">
+                <h2>Q81-Q82. Context Precision@K</h2>
+                <div class="context-precision-explanation">
+                    <div class="definition">
+                        <h3>정의</h3>
+                        <p>관련 청크가 검색 컨텍스트에서 얼마나 높은 순위에 위치하는지 측정</p>
+                        <div class="formula-detail">
+                            <div class="formula-box">
+                                Context Precision = Σ(Precision@k × v_k) / |관련 청크 수|
+                            </div>
+                            <p class="formula-note">v_k = 1 (k번째가 관련 있음), 0 (관련 없음)</p>
+                        </div>
+                    </div>
+                    <div class="why-weighted">
+                        <h3>가중 합 방식을 사용하는 이유</h3>
+                        <ul>
+                            <li>관련 청크의 <strong>존재</strong>와 <strong>순위</strong> 모두 반영</li>
+                            <li>높은 순위의 관련 청크에 더 높은 가중치 부여</li>
+                            <li>RAG에서 상위 랭크 정보가 생성 품질에 큰 영향</li>
+                        </ul>
+                    </div>
+                    <div class="example-calc">
+                        <h3>계산 예시</h3>
+                        <div class="calc-example">
+                            <p><strong>검색 결과 (Top 10):</strong> 관련 청크가 2, 4, 6, 8번째 위치</p>
+                            <div class="calc-steps">
+                                <div>Precision@2 × 1 = 1/2 = 0.5</div>
+                                <div>Precision@4 × 1 = 2/4 = 0.5</div>
+                                <div>Precision@6 × 1 = 3/6 = 0.5</div>
+                                <div>Precision@8 × 1 = 4/8 = 0.5</div>
+                                <div class="result">Context Precision@10 = (0.5+0.5+0.5+0.5) / 4 = <strong>0.5</strong></div>
+                            </div>
+                            <p class="interpretation">→ 중간 수준의 순위 능력 (관련 청크를 찾지만 최상위에 배치하지 못함)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="metrics">
+            <div class="slide-content">
+                <h2>Q86-Q88. Context Recall</h2>
+                <div class="context-recall-section">
+                    <div class="definition-comparison">
+                        <div class="traditional-recall">
+                            <h3>전통적 Recall</h3>
+                            <p>관련 <strong>문서</strong> 개수 카운팅</p>
+                            <div class="formula-box">
+                                검색된 관련 문서 / 전체 관련 문서
+                            </div>
+                        </div>
+                        <div class="arrow-transform">→</div>
+                        <div class="context-recall-def">
+                            <h3>Context Recall</h3>
+                            <p>Ground Truth <strong>클레임(주장)</strong> 기반</p>
+                            <div class="formula-box">
+                                검색 컨텍스트에 있는 GT 클레임 / 전체 GT 클레임
+                            </div>
+                        </div>
+                    </div>
+                    <div class="why-claims">
+                        <h3>왜 클레임 기반인가?</h3>
+                        <p>답변에 필요한 <strong>모든 정보 조각</strong>이 검색되었는지 세밀하게 평가</p>
+                    </div>
+                    <div class="impact-on-answers">
+                        <h3>생성 답변의 완전성에 미치는 영향</h3>
+                        <div class="impact-scenarios">
+                            <div class="scenario low-recall">
+                                <h4>❌ 낮은 Context Recall</h4>
+                                <p>일부 핵심 사실이 누락됨</p>
+                                <div class="result">→ 불완전한 답변</div>
+                            </div>
+                            <div class="scenario high-recall">
+                                <h4>✅ 높은 Context Recall</h4>
+                                <p>모든 필요한 정보 포함</p>
+                                <div class="result">→ 완전하고 정보가 풍부한 답변</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="example-scenario">
+                        <h3>예시</h3>
+                        <p><strong>질문:</strong> "2차 세계대전은 언제, 어디서, 왜 시작되었나?"</p>
+                        <p><strong>필요 클레임:</strong> [시작 연도, 장소, 원인]</p>
+                        <p><strong>검색 컨텍스트에 2개만 있음:</strong> Context Recall = 2/3 = 0.67 → 불완전한 답변</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="metrics">
+            <div class="slide-content">
+                <h2>Q97. Faithfulness (충실도)</h2>
+                <div class="faithfulness-section">
+                    <div class="definition-box">
+                        <h3>정의: RAG 생성기 품질 평가</h3>
+                        <p>생성된 응답이 검색된 컨텍스트와 얼마나 사실적으로 일치하는지 측정</p>
+                        <div class="formula-large">
+                            Faithfulness = (컨텍스트로 지원되는 클레임 수) / (응답의 총 클레임 수)
+                        </div>
+                    </div>
+                    <div class="score-meaning">
+                        <div class="score-item perfect">
+                            <span class="score">1.0</span>
+                            <span class="meaning">모든 클레임이 컨텍스트로 지원됨 - 완벽한 충실도</span>
+                        </div>
+                        <div class="score-item bad">
+                            <span class="score">0.0</span>
+                            <span class="meaning">지원되는 클레임 없음 - 완전한 불일치</span>
+                        </div>
+                    </div>
+                    <div class="importance">
+                        <h3>중요성</h3>
+                        <ul>
+                            <li>할루시네이션 감지 및 방지</li>
+                            <li>응답의 신뢰성 보장</li>
+                            <li>근거 없는 주장 식별</li>
+                        </ul>
+                    </div>
+                    <div class="example-faithfulness">
+                        <h3>예시</h3>
+                        <div class="example-content">
+                            <div class="context-box">
+                                <strong>컨텍스트:</strong> "Paris is the capital of France. It has a population of 2.2 million."
+                            </div>
+                            <div class="response-box good">
+                                <strong>응답 (높은 충실도):</strong> "Paris, the capital of France, has 2.2 million people."
+                                <div class="score-display">Faithfulness = 2/2 = 1.0 ✓</div>
+                            </div>
+                            <div class="response-box bad">
+                                <strong>응답 (낮은 충실도):</strong> "Paris is France's capital with 5 million people and the Eiffel Tower built in 1800."
+                                <div class="score-display">Faithfulness = 1/3 = 0.33 ✗ (인구, 연도 할루시네이션)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="metrics">
+            <div class="slide-content">
+                <h2>Q102. Response Relevancy vs Context Relevancy</h2>
+                <div class="relevancy-comparison">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>구분</th>
+                                <th>Context Relevancy</th>
+                                <th>Response Relevancy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>측정 대상</strong></td>
+                                <td>검색된 컨텍스트</td>
+                                <td>생성된 응답</td>
+                            </tr>
+                            <tr>
+                                <td><strong>비교 기준</strong></td>
+                                <td>쿼리와 컨텍스트</td>
+                                <td>쿼리와 응답</td>
+                            </tr>
+                            <tr>
+                                <td><strong>계산 방식</strong></td>
+                                <td>컨텍스트 내 쿼리 관련 문장 비율</td>
+                                <td>응답 내 쿼리 관련 문장 비율</td>
+                            </tr>
+                            <tr>
+                                <td><strong>평가 단계</strong></td>
+                                <td>검색 단계 (Retriever)</td>
+                                <td>생성 단계 (Generator)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>목적</strong></td>
+                                <td>검색기가 관련 컨텍스트를 가져왔는지 확인</td>
+                                <td>생성기가 쿼리에 맞는 답변을 했는지 확인</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="why-both">
+                        <h3>왜 두 메트릭 모두 필요한가?</h3>
+                        <div class="scenarios">
+                            <div class="scenario-box">
+                                <div class="scenario-case">
+                                    높은 Context Relevancy + 낮은 Response Relevancy
+                                </div>
+                                <div class="scenario-result">
+                                    → 검색은 잘했지만 생성이 주제를 벗어남
+                                </div>
+                            </div>
+                            <div class="scenario-box">
+                                <div class="scenario-case">
+                                    낮은 Context Relevancy + 높은 Response Relevancy
+                                </div>
+                                <div class="scenario-result">
+                                    → 검색은 못했지만 생성기가 기존 지식으로 관련 답변 (할루시네이션 가능성)
+                                </div>
+                            </div>
+                        </div>
+                        <p class="conclusion">전체 RAG 파이프라인(검색+생성) 효과성을 보장하려면 <strong>두 메트릭 모두 평가</strong> 필요</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7: Advanced Techniques -->
+        <section class="slide section-title" data-section="advanced">
+            <div class="slide-content">
+                <h1>07. 고급 기법</h1>
+                <p class="section-subtitle">Query Transformation & 최적화</p>
+            </div>
+        </section>
+
+        <section class="slide" data-section="advanced">
+            <div class="slide-content">
+                <h2>Q25. Query Transformation 기법</h2>
+                <div class="transformation-techniques">
+                    <div class="technique">
+                        <h3>1️⃣ Query Rewriting</h3>
+                        <p class="desc">모호한 쿼리를 명확하고 구체적으로 재작성</p>
+                        <div class="example-transform">
+                            <div class="before-query">"Tell me about it" (모호)</div>
+                            <div class="transform-arrow">→</div>
+                            <div class="after-query">"Tell me about Retrieval-Augmented Generation in NLP" (명확)</div>
+                        </div>
+                    </div>
+                    <div class="technique">
+                        <h3>2️⃣ Query Expansion (Step-Back Prompting)</h3>
+                        <p class="desc">더 넓고 일반화된 버전의 쿼리 생성</p>
+                        <div class="example-transform">
+                            <div class="before-query">"What is GPT-4's parameter count?"</div>
+                            <div class="transform-arrow">→</div>
+                            <div class="after-query">"What are the characteristics and specifications of large language models?"</div>
+                        </div>
+                    </div>
+                    <div class="technique">
+                        <h3>3️⃣ Query Decomposition</h3>
+                        <p class="desc">복잡한 쿼리를 여러 하위 쿼리로 분해</p>
+                        <div class="example-transform">
+                            <div class="before-query">"Compare RAG and fine-tuning for LLMs"</div>
+                            <div class="transform-arrow">→</div>
+                            <div class="after-query">
+                                Sub-Q1: "What is RAG?"<br>
+                                Sub-Q2: "What is fine-tuning?"<br>
+                                Sub-Q3: "What are pros/cons of each?"
+                            </div>
+                        </div>
+                    </div>
+                    <div class="technique highlight">
+                        <h3>4️⃣ HyDE (Hypothetical Document Embedding)</h3>
+                        <p class="desc">가상의 답변 문서를 생성하여 검색 쿼리로 사용</p>
+                        <div class="example-transform">
+                            <div class="before-query">"How does RAG reduce hallucination?"</div>
+                            <div class="transform-arrow">→</div>
+                            <div class="after-query">"RAG reduces hallucination by providing external factual context from trusted sources..." (가상 답변으로 검색)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="advanced">
+            <div class="slide-content">
+                <h2>Q27-Q29. HyDE vs HyPE</h2>
+                <div class="hyde-hype-comparison">
+                    <div class="technique-detail">
+                        <h3>🔵 HyDE (Hypothetical Document Embedding)</h3>
+                        <div class="technique-info">
+                            <div class="timing">⏱️ <strong>Timing:</strong> Query Time (쿼리 시점)</div>
+                            <div class="process">
+                                <div class="process-step">1. 사용자 쿼리 입력</div>
+                                <div class="arrow-down-small">↓</div>
+                                <div class="process-step">2. LLM으로 가상 답변 문서 생성</div>
+                                <div class="arrow-down-small">↓</div>
+                                <div class="process-step">3. 가상 문서를 임베딩</div>
+                                <div class="arrow-down-small">↓</div>
+                                <div class="process-step">4. 임베딩으로 검색</div>
+                            </div>
+                            <div class="pros-cons-small">
+                                <div>✅ 다양한 쿼리에 유연</div>
+                                <div>❌ 쿼리마다 LLM 호출 → 지연 증가</div>
+                            </div>
+                            <div class="focus-tag">Answer-to-Answer Matching</div>
+                        </div>
+                    </div>
+                    <div class="vs-large">VS</div>
+                    <div class="technique-detail">
+                        <h3>🟢 HyPE (Hypothetical Prompt Embedding)</h3>
+                        <div class="technique-info">
+                            <div class="timing">⏱️ <strong>Timing:</strong> Indexing Time (인덱싱 시점)</div>
+                            <div class="process">
+                                <div class="process-step">1. 각 문서 청크마다 가상 질문 생성 (오프라인)</div>
+                                <div class="arrow-down-small">↓</div>
+                                <div class="process-step">2. 가상 질문을 임베딩하여 저장</div>
+                                <div class="arrow-down-small">↓</div>
+                                <div class="process-step">3. 사용자 쿼리 입력 (온라인)</div>
+                                <div class="arrow-down-small">↓</div>
+                                <div class="process-step">4. 질문-질문 매칭으로 검색</div>
+                            </div>
+                            <div class="pros-cons-small">
+                                <div>✅ 런타임 지연 없음 (사전 계산)</div>
+                                <div>✅ 실시간 애플리케이션에 적합</div>
+                            </div>
+                            <div class="focus-tag">Question-to-Question Matching</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="key-difference">
+                    <h3>Q30. 지연 최소화를 위한 선택</h3>
+                    <p class="answer"><strong>HyPE</strong>를 선택 - 계산 부하를 인덱싱 단계로 이동시켜 쿼리 시 LLM 호출 없이 빠른 검색 가능</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="advanced">
+            <div class="slide-content">
+                <h2>Q4. RAG 시스템 지연 시간 감소 전략</h2>
+                <div class="latency-strategies">
+                    <div class="strategy-card">
+                        <div class="strategy-icon">💾</div>
+                        <h3>Caching</h3>
+                        <p>검색 결과나 생성 응답을 저장하여 중복 계산 방지</p>
+                        <div class="code-block-small">
+if query in cache:
+    return cache[query]
+else:
+    result = rag_pipeline(query)
+    cache[query] = result
+    return result
+                        </div>
+                    </div>
+                    <div class="strategy-card">
+                        <div class="strategy-icon">📉</div>
+                        <h3>Embedding Quantization</h3>
+                        <p>임베딩을 낮은 비트 정밀도로 양자화 (float32 → int8)</p>
+                        <div class="benefit">메모리 및 계산 부하 감소, 검색 속도 향상</div>
+                    </div>
+                    <div class="strategy-card">
+                        <div class="strategy-icon">🎯</div>
+                        <h3>Selective Query Rewriting</h3>
+                        <p>복잡하거나 모호한 쿼리에만 쿼리 재작성 적용</p>
+                        <div class="benefit">간단한 쿼리의 불필요한 계산 제거</div>
+                    </div>
+                    <div class="strategy-card">
+                        <div class="strategy-icon">⚡</div>
+                        <h3>Selective Re-ranking</h3>
+                        <p>복잡한 쿼리에만 리랭커 사용</p>
+                        <div class="benefit">간단한 쿼리의 리랭킹 오버헤드 절약</div>
+                    </div>
+                </div>
+                <div class="highlight-box info">
+                    <strong>핵심 원칙:</strong> 계산 집약적 작업을 선택적으로 적용하여 품질을 유지하면서 지연 감소
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Slide -->
+        <section class="slide" data-section="conclusion">
+            <div class="slide-content">
+                <h1>RAG 마스터 체크리스트</h1>
+                <div class="checklist-grid">
+                    <div class="checklist-section">
+                        <h3>✅ 기초</h3>
+                        <ul>
+                            <li>RAG의 필요성 이해</li>
+                            <li>R-A-G 각 단계 파악</li>
+                            <li>할루시네이션 감소 메커니즘</li>
+                        </ul>
+                    </div>
+                    <div class="checklist-section">
+                        <h3>✅ 구현</h3>
+                        <ul>
+                            <li>적절한 청킹 전략 선택</li>
+                            <li>임베딩 모델 선택</li>
+                            <li>Vector DB 구축</li>
+                        </ul>
+                    </div>
+                    <div class="checklist-section">
+                        <h3>✅ 최적화</h3>
+                        <ul>
+                            <li>리랭킹 적용</li>
+                            <li>Query Transformation</li>
+                            <li>지연 시간 최적화</li>
+                        </ul>
+                    </div>
+                    <div class="checklist-section">
+                        <h3>✅ 평가</h3>
+                        <ul>
+                            <li>Context Precision/Recall</li>
+                            <li>Faithfulness</li>
+                            <li>Response Relevancy</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="final-message">
+                    <h2>🎓 다음 단계</h2>
+                    <p>이론을 실제 프로젝트에 적용하고, 계속 실험하며 최적화하세요!</p>
+                    <div class="resources">
+                        <p><strong>리소스:</strong> LangChain, LlamaIndex, Haystack</p>
+                        <p><strong>출처:</strong> AIxFunda Newsletter - Kalyan KS</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-section="conclusion">
+            <div class="slide-content thank-you">
+                <h1>Thank You!</h1>
+                <p class="subtitle">RAG 완벽 가이드</p>
+                <div class="credits">
+                    <p>Based on AIxFunda Newsletter by Kalyan KS</p>
+                    <p>105 Q&A from RAG Interview Questions</p>
+                </div>
+                <div class="navigation-help">
+                    <p>키보드 조작: ← → 슬라이드 이동 | Home/End 처음/끝</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="controls">
+        <button id="prevBtn" class="control-btn">◄</button>
+        <span id="slideNumber" class="slide-number">1 / 35</span>
+        <button id="nextBtn" class="control-btn">►</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
